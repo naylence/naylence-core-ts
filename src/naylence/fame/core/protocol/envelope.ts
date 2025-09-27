@@ -128,7 +128,7 @@ export function createFameEnvelope(options: CreateFameEnvelopeOptions): FameEnve
   if (options.to) {
     toAddress = typeof options.to === 'string' ? new FameAddress(options.to) : options.to;
   }
-  
+
   const envelope = FameEnvelopeSchema.parse({
     id: options.id || generateId(),
     sid: options.sid,

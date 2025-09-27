@@ -1,7 +1,6 @@
 import {
   FameFabric,
   createFameEnvelope,
-  DataFrame,
   DeliveryAckFrame,
   FameEnvelope,
   FameMessageHandler,
@@ -10,6 +9,7 @@ import {
   fabricStack
 } from "../naylence/fame/core/fame-fabric";
 import { FameAddress } from "../naylence/fame/core/address/address";
+import { DataFrameSchema, type DataFrame } from "../naylence/fame/core/protocol/frames";
 
 // Mock concrete implementation for testing
 class MockFameFabric extends FameFabric {
@@ -33,7 +33,10 @@ class MockFameFabric extends FameFabric {
   }
 
   async send(envelope: FameEnvelope, timeoutMs?: number | null): Promise<DeliveryAckFrame | null> {
-    return { success: true };
+    return {
+      type: "DeliveryAck",
+      ok: true,
+    };
   }
 
   async invoke(
@@ -54,24 +57,30 @@ class MockFameFabric extends FameFabric {
     return { result: "invoked by capability" };
   }
 
-  async *invokeStream(
+  async invokeStream(
     address: FameAddress,
     method: string,
     params: Record<string, unknown>,
     timeoutMs?: number
-  ): AsyncIterable<unknown> {
-    yield { stream: "item1" };
-    yield { stream: "item2" };
+  ): Promise<AsyncIterable<unknown>> {
+    async function* generator() {
+      yield { stream: "item1" };
+      yield { stream: "item2" };
+    }
+    return generator();
   }
 
-  async *invokeByCapabilityStream(
+  async invokeByCapabilityStream(
     capabilities: string[],
     method: string,
     params: Record<string, unknown>,
     timeoutMs?: number
-  ): AsyncIterable<unknown> {
-    yield { capability: "stream1" };
-    yield { capability: "stream2" };
+  ): Promise<AsyncIterable<unknown>> {
+    async function* generator() {
+      yield { capability: "stream1" };
+      yield { capability: "stream2" };
+    }
+    return generator();
   }
 
   async subscribe(
@@ -90,7 +99,7 @@ class MockFameFabric extends FameFabric {
   }
 
   resolveServiceByCapability(capability: string): FameService {
-    return { name: `service-for-${capability}` };
+    return { capabilities: [capability] };
   }
 }
 
@@ -106,21 +115,25 @@ describe("Fame Fabric", () => {
   describe("DataFrame", () => {
     it("should create DataFrame with payload", () => {
       const payload = { test: "data" };
-      const frame = new DataFrame(payload);
-      
+      const frame = DataFrameSchema.parse({ payload });
+
       expect(frame.payload).toBe(payload);
+      expect(frame.type).toBe("Data");
     });
   });
 
   describe("createFameEnvelope", () => {
     it("should create envelope with address and frame", () => {
       const address = new FameAddress("test@mock.host");
-      const frame = new DataFrame({ message: "test" });
+      const frame: DataFrame = {
+        type: "Data",
+        payload: { message: "test" },
+      };
       
       const envelope = createFameEnvelope({ to: address, frame });
       
-      expect(envelope.to).toBe(address);
-      expect(envelope.frame).toBe(frame);
+      expect(envelope.to?.toString()).toBe(address.toString());
+      expect(envelope.frame).toEqual(frame);
     });
   });
 
@@ -305,14 +318,14 @@ describe("Fame Fabric", () => {
     it("should send message with string address", async () => {
       const result = await fabric.sendMessage("test@mock.host", { message: "hello" });
       
-      expect(result).toEqual({ success: true });
+      expect(result).toEqual({ type: "DeliveryAck", ok: true });
     });
 
     it("should send message with FameAddress", async () => {
       const address = new FameAddress("test@mock.host");
       const result = await fabric.sendMessage(address, { message: "hello" });
       
-      expect(result).toEqual({ success: true });
+      expect(result).toEqual({ type: "DeliveryAck", ok: true });
     });
   });
 

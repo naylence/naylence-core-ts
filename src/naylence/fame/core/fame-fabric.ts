@@ -1,34 +1,9 @@
 import { FameAddress } from './address/address';
 import { FameConfig } from './fame-config';
-
-// Forward declarations - these will be implemented in their respective modules
-export interface FameMessageHandler {
-  handle(message: unknown): Promise<void>;
-}
-
-export interface FameEnvelope {
-  to: FameAddress;
-  frame: DataFrame;
-}
-
-export function createFameEnvelope(options: { to: FameAddress; frame: DataFrame }): FameEnvelope {
-  return {
-    to: options.to,
-    frame: options.frame,
-  };
-}
-
-export class DataFrame {
-  constructor(public readonly payload: unknown) {}
-}
-
-export interface DeliveryAckFrame {
-  success: boolean;
-}
-
-export interface FameService {
-  name?: string;
-}
+import { createFameEnvelope, type FameEnvelope } from './protocol/envelope';
+import { type DataFrame, type DeliveryAckFrame } from './protocol/frames';
+import { type FameMessageHandler } from './handlers/handlers';
+import { type FameService } from './service/fame-service';
 
 // Context variable stack for fabric instances
 let fabricStack: FameFabric[] = [];
@@ -55,10 +30,16 @@ export abstract class FameFabric {
     address: FameAddress | string,
     message: unknown
   ): Promise<DeliveryAckFrame | null> {
+    const target = typeof address === 'string' ? new FameAddress(address) : address;
+    const frame: DataFrame = {
+      type: 'Data',
+      payload: message,
+    };
+
     return await this.send(
       createFameEnvelope({
-        to: typeof address === 'string' ? new FameAddress(address) : address,
-        frame: new DataFrame({ payload: message }),
+        to: target,
+        frame,
       })
     );
   }
@@ -82,14 +63,14 @@ export abstract class FameFabric {
     method: string,
     params: Record<string, unknown>,
     timeoutMs?: number
-  ): AsyncIterable<unknown>;
+  ): Promise<AsyncIterable<unknown>>;
 
   abstract invokeByCapabilityStream(
     capabilities: string[],
     method: string,
     params: Record<string, unknown>,
     timeoutMs?: number
-  ): AsyncIterable<unknown>;
+  ): Promise<AsyncIterable<unknown>>;
 
   abstract subscribe(
     sinkAddress: FameAddress,
@@ -248,3 +229,8 @@ export abstract class FameFabric {
 
 // Export the fabric stack for testing
 export { fabricStack };
+export { createFameEnvelope };
+export type { FameEnvelope };
+export type { DeliveryAckFrame };
+export type { FameMessageHandler };
+export type { FameService };
