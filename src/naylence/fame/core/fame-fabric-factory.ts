@@ -1,5 +1,5 @@
-import { FameFabric } from './fame-fabric';
-import { FameFabricConfig } from './fame-fabric-config';
+import { FameFabric } from './fame-fabric.js';
+import { FameFabricConfig } from './fame-fabric-config.js';
 
 // Define our own ResourceFactory interface for now
 export interface ResourceFactory<T = unknown, C = unknown> {

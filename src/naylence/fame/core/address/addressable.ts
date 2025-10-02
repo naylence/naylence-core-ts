@@ -1,4 +1,4 @@
-import { FameAddress } from './address';
+import { FameAddress } from './address.js';
 
 /**
  * Protocol for objects that have an address property

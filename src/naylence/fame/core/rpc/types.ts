@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { generateId } from '../util/id-generator';
+import { generateId } from '../util/id-generator.js';
 
 // JSON-RPC Error schema
 export const JSONRPCErrorSchema = z.object({

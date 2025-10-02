@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { generateId, generateIdAsync } from "../naylence/fame/core/util/id-generator";
 
 describe("ID Generator Environment Detection", () => {

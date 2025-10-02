@@ -559,9 +559,8 @@ describe("Envelope Serialization", () => {
     it("should handle undefined to address in createFameEnvelope", () => {
       const frame = createDataFrame();
       const options: CreateFameEnvelopeOptions = {
-        frame,
-        to: undefined
-      };
+        frame
+      } as CreateFameEnvelopeOptions;
       
       const envelope = createFameEnvelope(options);
       

@@ -218,13 +218,13 @@ describe("Channel", () => {
 
     describe("checkNotClosed method", () => {
       it("should not throw when channel is open", () => {
-        expect(() => (channel as unknown).checkNotClosed()).not.toThrow();
+        expect(() => (channel as any).checkNotClosed()).not.toThrow();
       });
 
       it("should throw when channel is closed", async () => {
         await channel.close();
         
-        expect(() => (channel as unknown).checkNotClosed()).toThrow("Channel is closed");
+        expect(() => (channel as any).checkNotClosed()).toThrow("Channel is closed");
       });
     });
   });
@@ -336,7 +336,7 @@ describe("Channel", () => {
       const channelWithProps = {
         receive: "not a function",
         send: "also not a function"
-      } as unknown;
+      } as any;
       
       expect(isReadChannel(channelWithProps)).toBe(false);
       expect(isWriteChannel(channelWithProps)).toBe(false);
@@ -344,7 +344,7 @@ describe("Channel", () => {
     });
 
     it("should handle null channel objects", () => {
-      const nullChannel = null as unknown;
+      const nullChannel = null as any;
       
       expect(() => isReadChannel(nullChannel)).toThrow();
       expect(() => isWriteChannel(nullChannel)).toThrow();

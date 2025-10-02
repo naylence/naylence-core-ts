@@ -1,9 +1,18 @@
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
-import typescript from '@rollup/plugin-typescript';
+import { existsSync } from 'node:fs';
+import { resolve as resolvePath } from 'node:path';
+
+const esmEntry = resolvePath('dist/esm/naylence-core-ts/src/index.js');
+
+if (!existsSync(esmEntry)) {
+  throw new Error(
+    'Browser build requires dist/esm/naylence-core-ts/src/index.js. Run "npm run build:esm" before bundling or use "npm run build".'
+  );
+}
 
 export default {
-  input: 'src/index.ts',
+  input: esmEntry,
   output: {
     file: 'dist/browser/index.js',
     format: 'es',
@@ -15,13 +24,6 @@ export default {
       preferBuiltins: false,
     }),
     commonjs(),
-    typescript({
-      target: 'es2020',
-      module: 'es2020',
-      declaration: false,
-      declarationMap: false,
-      sourceMap: true,
-    }),
   ],
-  external: ['naylence-factory'],
+  external: (id) => id === 'naylence-factory' || id === 'naylence-factory-ts' || id.startsWith('zod'),
 };

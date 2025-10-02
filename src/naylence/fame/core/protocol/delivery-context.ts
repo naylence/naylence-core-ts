@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { DeliveryOriginType } from './origin-type';
-import { FameResponseType } from './response-type';
+import { DeliveryOriginType } from './origin-type.js';
+import { FameResponseType } from './response-type.js';
 
 // Authorization context schema
 export const AuthorizationContextSchema = z.object({

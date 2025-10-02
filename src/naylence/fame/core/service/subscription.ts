@@ -1,4 +1,4 @@
-import { FameAddress } from '../address/address';
+import { FameAddress } from '../address/address.js';
 
 /**
  * Channel interface for subscription management

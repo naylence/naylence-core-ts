@@ -11,8 +11,8 @@ import {
   createJSONRPCRequest,
   createJSONRPCResponse,
   createJSONRPCErrorResponse,
-} from './types';
-import { generateId } from '../util/id-generator';
+} from './types.js';
+import { generateId } from '../util/id-generator.js';
 
 /**
  * Construct a JSON-RPC 2.0 request payload.

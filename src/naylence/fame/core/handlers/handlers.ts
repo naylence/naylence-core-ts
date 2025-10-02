@@ -1,5 +1,5 @@
-import { FameEnvelope } from '../protocol/envelope';
-import { FameDeliveryContext } from '../protocol/delivery-context';
+import { FameEnvelope } from '../protocol/envelope.js';
+import { FameDeliveryContext } from '../protocol/delivery-context.js';
 
 /**
  * Response containing an envelope to be delivered.

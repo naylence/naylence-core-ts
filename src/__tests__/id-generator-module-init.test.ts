@@ -2,6 +2,7 @@
  * Dedicated test file for difficult-to-reach lines in id-generator
  * This file uses module mocking to ensure coverage of initialization code
  */
+import { jest } from "@jest/globals";
 
 describe("ID Generator Initialization", () => {
   

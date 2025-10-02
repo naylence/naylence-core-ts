@@ -1,5 +1,5 @@
-import { FameAddress } from '../address/address';
-import { ReadWriteChannel } from './channel';
+import { FameAddress } from '../address/address.js';
+import { ReadWriteChannel } from './channel.js';
 
 /**
  * Binding class representing a connection between a channel and an address

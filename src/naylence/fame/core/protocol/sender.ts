@@ -1,4 +1,4 @@
-import { FameEnvelope } from './envelope';
+import { FameEnvelope } from './envelope.js';
 
 /**
  * Protocol interface for sending Fame envelopes

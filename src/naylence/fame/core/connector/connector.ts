@@ -1,8 +1,8 @@
-import { ConnectorState } from './connector-state';
-import { FameEnvelopeHandler } from '../handlers/handlers';
-import { FameChannelMessage } from '../protocol/channel-message';
-import { AuthorizationContext } from '../protocol/delivery-context';
-import { FameEnvelope } from '../protocol/envelope';
+import { ConnectorState } from './connector-state.js';
+import { FameEnvelopeHandler } from '../handlers/handlers.js';
+import { FameChannelMessage } from '../protocol/channel-message.js';
+import { AuthorizationContext } from '../protocol/delivery-context.js';
+import { FameEnvelope } from '../protocol/envelope.js';
 
 /**
  * Protocol interface for Fame connectors

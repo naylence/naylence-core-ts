@@ -3,8 +3,8 @@
  */
 
 import { z } from 'zod';
-import { FameEnvelope, FameEnvelopeSchema } from './envelope';
-import { FameDeliveryContext, FameDeliveryContextSchema } from './delivery-context';
+import { FameEnvelope, FameEnvelopeSchema } from './envelope.js';
+import { FameDeliveryContext, FameDeliveryContextSchema } from './delivery-context.js';
 
 // Fame channel message schema
 export const FameChannelMessageSchema = z.object({

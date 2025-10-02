@@ -1,8 +1,8 @@
-import { FameAddress } from '../address/address';
-import { FameRPCHandler, FameEnvelopeHandler } from '../handlers/handlers';
-import { FameEnvelope } from '../protocol/envelope';
-import { FameDeliveryContext } from '../protocol/delivery-context';
-import { DEFAULT_INVOKE_TIMEOUT_MILLIS } from '../util/constants';
+import { FameAddress } from '../address/address.js';
+import { FameRPCHandler, FameEnvelopeHandler } from '../handlers/handlers.js';
+import { FameEnvelope } from '../protocol/envelope.js';
+import { FameDeliveryContext } from '../protocol/delivery-context.js';
+import { DEFAULT_INVOKE_TIMEOUT_MILLIS } from '../util/constants.js';
 
 /**
  * Protocol for invoking methods on a specific address
@@ -140,18 +140,18 @@ export class FameServiceProxy implements FameService {
     return new FameServiceProxy({ ...options, capabilities });
   }
 
-  private _invokeDefault(
+  private async _invokeDefault(
     targetAddr: FameAddress,
     method: string,
     params: Record<string, any>,
     timeoutMs: number = this._timeout
   ): Promise<any> {
     // Import here to avoid circular dependency
-    const { FameFabric } = require('../fame-fabric');
+    const { FameFabric } = await import('../fame-fabric.js');
     const fabric = this._fabric || FameFabric.current();
     
     try {
-      return fabric.invoke(targetAddr, method, params, timeoutMs);
+      return await fabric.invoke(targetAddr, method, params, timeoutMs);
     } catch (error) {
       // Fallback to capability-based invoke if direct invoke fails
       if (this._invokeByCapability && this._capabilities?.length) {
@@ -161,14 +161,14 @@ export class FameServiceProxy implements FameService {
     }
   }
 
-  private _invokeByCapabilityDefault(
+  private async _invokeByCapabilityDefault(
     capabilities: string[],
     method: string,
     params: Record<string, any>,
     timeoutMs: number = this._timeout
   ): Promise<any> {
     // Import here to avoid circular dependency
-    const { FameFabric } = require('../fame-fabric');
+    const { FameFabric } = await import('../fame-fabric.js');
     const fabric = this._fabric || FameFabric.current();
     return fabric.invokeByCapability(capabilities, method, params, timeoutMs);
   }

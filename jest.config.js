@@ -1,17 +1,22 @@
 export default {
-  preset: 'ts-jest/presets/default-esm',
+  preset: 'ts-jest',
   testEnvironment: 'node',
-  extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^naylence-factory$': '<rootDir>/../naylence-factory-ts/src/index.ts',
+    '^naylence-factory/(.*)$': '<rootDir>/../naylence-factory-ts/src/$1',
   },
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   transform: {
     '^.+\\.ts$': ['ts-jest', {
-      useESM: true,
+      tsconfig: 'tsconfig.jest.json',
     }],
   },
+  transformIgnorePatterns: [
+    '[/\\\\]dist[/\\\\]',
+  ],
+  testPathIgnorePatterns: ['<rootDir>/dist/', '<rootDir>/src/__tests__/setup.ts'],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
@@ -20,5 +25,6 @@ export default {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/test/jest.setup.js'],
+  maxWorkers: 1,
 };

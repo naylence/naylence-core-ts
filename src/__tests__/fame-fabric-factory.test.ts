@@ -11,7 +11,7 @@ describe("FameFabricFactory", () => {
     public readonly priority = 10;
     
     // Store the inputs for verification
-    public lastConfig?: FameFabricConfig | Record<string, unknown> | null;
+  public lastConfig: FameFabricConfig | Record<string, unknown> | null | undefined;
     public lastKwargs: unknown[] = [];
     
     public async create(

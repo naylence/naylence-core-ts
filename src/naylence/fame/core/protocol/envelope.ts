@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { FameAddress, FameAddressSchema } from '../address/address';
-import { FlowFlags, CreditUpdateFrameSchema } from './flow';
-import { FameFrameUnionSchema } from './frames';
-import { FameResponseType } from './response-type';
-import { SecurityHeaderSchema } from './security-header';
-import { generateId } from '../util/id-generator';
+import { FameAddress, FameAddressSchema } from '../address/address.js';
+import { FlowFlags, CreditUpdateFrameSchema } from './flow.js';
+import { FameFrameUnionSchema } from './frames.js';
+import { FameResponseType } from './response-type.js';
+import { SecurityHeaderSchema } from './security-header.js';
+import { generateId } from '../util/id-generator.js';
 
 // Define priority enum
 export enum Priority {

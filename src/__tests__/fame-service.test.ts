@@ -46,7 +46,7 @@ describe("FameService", () => {
         const proxy = new FameServiceProxy({
           address: undefined,
           capabilities: undefined
-        });
+        } as any);
         
         expect(proxy.capabilities).toBeUndefined();
       });

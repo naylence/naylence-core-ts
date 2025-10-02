@@ -8,6 +8,10 @@ import {
   resetFabricStack,
   fabricStack
 } from "../naylence/fame/core/fame-fabric";
+import { FameFabricFactory } from "../naylence/fame/core/fame-fabric-factory";
+import { setDefaultFameConfigResolver } from "../naylence/fame/core/default-fame-config-resolver";
+import type { FameFabricConfig } from "../naylence/fame/core/fame-fabric-config";
+import { ExtensionManager } from "naylence-factory";
 import { FameAddress } from "../naylence/fame/core/address/address";
 import { DataFrameSchema, type DataFrame } from "../naylence/fame/core/protocol/frames";
 
@@ -103,13 +107,43 @@ class MockFameFabric extends FameFabric {
   }
 }
 
+class RegisteredMockFameFabricFactory extends FameFabricFactory {
+  public readonly type = "mock";
+  public readonly isDefault = true;
+
+  public lastConfig: FameFabricConfig | Record<string, unknown> | null | undefined;
+  public lastArgs: unknown[] = [];
+
+  public resetTracking(): void {
+    this.lastConfig = undefined;
+    this.lastArgs = [];
+  }
+
+  public async create(
+    config?: FameFabricConfig | Record<string, unknown> | null,
+    ...kwargs: unknown[]
+  ): Promise<FameFabric> {
+    this.lastConfig = config ?? null;
+    this.lastArgs = [...kwargs];
+    return new MockFameFabric();
+  }
+}
+
+const registeredFactory = new RegisteredMockFameFabricFactory();
+
+beforeAll(() => {
+  ExtensionManager.registerGlobalFactoryInstance("FameFabricFactory", registeredFactory);
+});
+
 describe("Fame Fabric", () => {
   beforeEach(() => {
+    registeredFactory.resetTracking();
     resetFabricStack();
   });
 
   afterEach(() => {
     resetFabricStack();
+    setDefaultFameConfigResolver(null);
   });
 
   describe("DataFrame", () => {
@@ -331,43 +365,102 @@ describe("Fame Fabric", () => {
 
   describe("Factory methods", () => {
     describe("create", () => {
-      it("should handle empty options", async () => {
-        await expect(FameFabric.create()).rejects.toThrow("Factory resolution not yet implemented");
+      it("should create a fabric using the default factory when no config is provided", async () => {
+        const fabric = await FameFabric.create();
+
+        expect(fabric).toBeInstanceOf(MockFameFabric);
+        expect(registeredFactory.lastConfig).toEqual({ type: "mock" });
       });
 
-      it("should handle options with FameConfig", async () => {
-        const config = { fabric: { type: "mock" } };
-        
-        await expect(FameFabric.create({ rootConfig: config })).rejects.toThrow("Factory resolution not yet implemented");
-      });
-
-      it("should handle options with fabric property", async () => {
-        const config = { fabric: { type: "mock" } };
-        
-        await expect(FameFabric.create({ rootConfig: config })).rejects.toThrow("Factory resolution not yet implemented");
-      });
-
-      it("should handle additional options", async () => {
-        const options = { 
-          rootConfig: { fabric: { type: "mock" } },
-          additionalOption: "value"
+      it("should use the default config resolver when provided", async () => {
+        const resolverConfig = {
+          fabric: { type: "mock", opts: { source: "resolver" } },
+          extra: { flag: true },
         };
-        
-        await expect(FameFabric.create(options)).rejects.toThrow("Factory resolution not yet implemented");
+
+        setDefaultFameConfigResolver(() => resolverConfig);
+
+        const fabric = await FameFabric.create();
+
+        expect(fabric).toBeInstanceOf(MockFameFabric);
+        expect(registeredFactory.lastConfig).toEqual({
+          type: "mock",
+          opts: { source: "resolver" },
+        });
+        expect(registeredFactory.lastArgs).toHaveLength(2);
+
+        const [normalizedRootConfig, rawRootConfig] = registeredFactory.lastArgs;
+        expect(normalizedRootConfig).toMatchObject({
+          fabric: { type: "mock", opts: { source: "resolver" } },
+          extra: { flag: true },
+          plugins: [],
+          autoLoadPlugins: true,
+          pluginLogLevel: "warn",
+        });
+        expect(rawRootConfig).toBe(resolverConfig);
+        expect(normalizedRootConfig).not.toBe(resolverConfig);
+      });
+
+      it("should create a fabric using the root config fabric entry", async () => {
+        const config = { fabric: { type: "mock", opts: { key: "value" } } };
+
+        const fabric = await FameFabric.create({ rootConfig: config });
+
+        expect(fabric).toBeInstanceOf(MockFameFabric);
+        expect(registeredFactory.lastConfig).toEqual({ type: "mock", opts: { key: "value" } });
+      });
+
+      it("should pass through additional create options", async () => {
+        const rootConfigInput = { fabric: { type: "mock" } };
+
+        await FameFabric.create({
+          rootConfig: rootConfigInput,
+          factoryArgs: ["alpha", 123],
+        } as unknown as Record<string, unknown>);
+
+        expect(registeredFactory.lastArgs).toHaveLength(4);
+        expect(registeredFactory.lastArgs[0]).toBe("alpha");
+        expect(registeredFactory.lastArgs[1]).toBe(123);
+        expect(registeredFactory.lastArgs[2]).toMatchObject({
+          fabric: { type: "mock" },
+          plugins: [],
+          autoLoadPlugins: true,
+          pluginLogLevel: "warn",
+        });
+        expect(registeredFactory.lastArgs[2]).not.toBe(rootConfigInput);
+        expect(registeredFactory.lastArgs[3]).toBe(rootConfigInput);
       });
     });
 
     describe("fromConfig", () => {
-      it("should throw not implemented error", async () => {
-        await expect(FameFabric.fromConfig()).rejects.toThrow("Factory resolution not yet implemented");
+      it("should create a fabric from an explicit config", async () => {
+        const fabric = await FameFabric.fromConfig({ type: "mock", opts: { nested: true } });
+
+        expect(fabric).toBeInstanceOf(MockFameFabric);
+        expect(registeredFactory.lastConfig).toEqual({ type: "mock", opts: { nested: true } });
       });
 
-      it("should throw not implemented error with config", async () => {
-        await expect(FameFabric.fromConfig({ type: "mock" })).rejects.toThrow("Factory resolution not yet implemented");
+      it("should throw when config lacks a type", async () => {
+        await expect(FameFabric.fromConfig({})).rejects.toThrow("Configuration must have a 'type' field");
       });
 
-      it("should throw not implemented error with kwargs", async () => {
-        await expect(FameFabric.fromConfig({}, { option: "value" })).rejects.toThrow("Factory resolution not yet implemented");
+      it("should throw when config is not an object", async () => {
+        await expect(FameFabric.fromConfig("bad" as unknown as Record<string, unknown>)).rejects.toThrow(
+          "FameFabric.fromConfig expects configuration to be an object"
+        );
+      });
+
+      it("should forward factory arguments", async () => {
+        await FameFabric.fromConfig({ type: "mock" }, { factoryArgs: ["beta", { flag: true }] });
+
+        expect(registeredFactory.lastArgs).toEqual(["beta", { flag: true }]);
+      });
+
+      it("should use default factory when config is null", async () => {
+        const fabric = await FameFabric.fromConfig(null);
+
+        expect(fabric).toBeInstanceOf(MockFameFabric);
+        expect(registeredFactory.lastConfig).toEqual({ type: "mock" });
       });
     });
 
@@ -381,14 +474,20 @@ describe("Fame Fabric", () => {
         expect(result).toBe(fabric);
       });
 
-      it("should delegate to create when stack empty", async () => {
-        await expect(FameFabric.getOrCreate()).rejects.toThrow("Factory resolution not yet implemented");
+      it("should create a new fabric when stack is empty", async () => {
+        const fabric = await FameFabric.getOrCreate();
+
+        expect(fabric).toBeInstanceOf(MockFameFabric);
+        expect(registeredFactory.lastConfig).toEqual({ type: "mock" });
       });
 
-      it("should pass options to create when stack empty", async () => {
-        const options = { test: "option" };
-        
-        await expect(FameFabric.getOrCreate(options)).rejects.toThrow("Factory resolution not yet implemented");
+      it("should pass options through when creating a new fabric", async () => {
+        const options = { rootConfig: { fabric: { type: "mock", opts: { custom: 42 } } } };
+
+        const fabric = await FameFabric.getOrCreate(options);
+
+        expect(fabric).toBeInstanceOf(MockFameFabric);
+        expect(registeredFactory.lastConfig).toEqual({ type: "mock", opts: { custom: 42 } });
       });
     });
   });

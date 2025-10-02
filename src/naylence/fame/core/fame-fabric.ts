@@ -1,9 +1,17 @@
-import { FameAddress } from './address/address';
-import { FameConfig } from './fame-config';
-import { createFameEnvelope, type FameEnvelope } from './protocol/envelope';
-import { type DataFrame, type DeliveryAckFrame } from './protocol/frames';
-import { type FameMessageHandler } from './handlers/handlers';
-import { type FameService } from './service/fame-service';
+import { FameAddress } from './address/address.js';
+import { type FameConfig, normalizeFameConfig } from './fame-config.js';
+import type { FameFabricConfig } from './fame-fabric-config.js';
+import { createFameEnvelope, type FameEnvelope } from './protocol/envelope.js';
+import { type DataFrame, type DeliveryAckFrame } from './protocol/frames.js';
+import { type FameMessageHandler } from './handlers/handlers.js';
+import { type FameService } from './service/fame-service.js';
+import {
+  type CreateResourceOptions,
+  ExtensionManager,
+  createDefaultResource,
+  createResource,
+} from 'naylence-factory';
+import { resolveDefaultFameConfig } from './default-fame-config-resolver.js';
 
 // Context variable stack for fabric instances
 let fabricStack: FameFabric[] = [];
@@ -169,22 +177,29 @@ export abstract class FameFabric {
     rootConfig?: Record<string, unknown> | FameConfig;
     [key: string]: unknown;
   } = {}): Promise<FameFabric> {
-    // 1️⃣  canonicalise opts → FameFabricConfig
-    let fabricConfig: unknown = null;
-    let fameConfig: FameConfig | null = null;
-    
-    if (options.rootConfig) {
-      if (typeof options.rootConfig === 'object' && 'fabric' in options.rootConfig) {
-        fameConfig = options.rootConfig as FameConfig;
-        fabricConfig = fameConfig.fabric;
-      } else {
-        fameConfig = options.rootConfig as FameConfig;
-        fabricConfig = fameConfig.fabric;
+    const { rootConfig: rootConfigInput, ...rest } = options;
+    const candidate =
+      rootConfigInput && typeof rootConfigInput === 'object' && !Array.isArray(rootConfigInput)
+        ? (rootConfigInput as FameConfig)
+        : undefined;
+
+    let resolvedRootConfig: FameConfig | Record<string, unknown> | null = candidate ?? null;
+
+    if (!resolvedRootConfig) {
+      const defaultConfig = await resolveDefaultFameConfig();
+      if (defaultConfig) {
+        resolvedRootConfig = defaultConfig as FameConfig | Record<string, unknown>;
       }
     }
 
-    // 2️⃣  delegate to the real constructor
-    return FameFabric.fromConfig(fabricConfig, options);
+    const normalized = await normalizeFameConfig(resolvedRootConfig ?? undefined);
+    const nextOptions = {
+      ...rest,
+      rootConfig: normalized,
+      rawRootConfig: resolvedRootConfig ?? null,
+    };
+
+    return FameFabric.fromConfig(normalized.fabric, nextOptions);
   }
 
   static async fromConfig(
@@ -196,9 +211,65 @@ export abstract class FameFabric {
      * (see `createResource`).
      */
     
-    // For now, we'll need to implement factory resolution
-    // This would normally use the factory registry from naylence-factory
-    throw new Error('Factory resolution not yet implemented - requires naylence-factory integration');
+    const kwargs = { ..._kwargs } as CreateResourceOptions & {
+      rootConfig?: Record<string, unknown> | FameConfig | null;
+      rawRootConfig?: Record<string, unknown> | FameConfig | null;
+    };
+    const configInput = _cfg;
+
+    const rootConfig = kwargs.rootConfig ?? null;
+    if ('rootConfig' in kwargs) {
+      delete (kwargs as Record<string, unknown>).rootConfig;
+    }
+
+    const rawRootConfig = kwargs.rawRootConfig ?? null;
+    if ('rawRootConfig' in kwargs) {
+      delete (kwargs as Record<string, unknown>).rawRootConfig;
+    }
+
+    if (rootConfig !== null && rootConfig !== undefined) {
+      const existingArgs = Array.isArray(kwargs.factoryArgs) ? [...kwargs.factoryArgs] : [];
+      existingArgs.push(rootConfig);
+      if (rawRootConfig !== null && rawRootConfig !== undefined) {
+        existingArgs.push(rawRootConfig);
+      }
+      kwargs.factoryArgs = existingArgs;
+    } else if (rawRootConfig !== null && rawRootConfig !== undefined) {
+      const existingArgs = Array.isArray(kwargs.factoryArgs) ? [...kwargs.factoryArgs] : [];
+      existingArgs.push(rawRootConfig);
+      kwargs.factoryArgs = existingArgs;
+    }
+
+    if (
+      configInput !== undefined &&
+      configInput !== null &&
+      (typeof configInput !== 'object' || Array.isArray(configInput))
+    ) {
+      throw new Error('FameFabric.fromConfig expects configuration to be an object');
+    }
+
+    const baseTypeName = 'FameFabricFactory';
+
+    // Ensure the extension manager for fabrics is initialised so manual registrations are honoured.
+    ExtensionManager.getExtensionManager<FameFabric, FameFabricConfig | Record<string, unknown>>(
+      'naylence.fabric',
+      baseTypeName
+    );
+
+    const config =
+      configInput && typeof configInput === 'object' && !Array.isArray(configInput)
+        ? (configInput as FameFabricConfig | Record<string, unknown>)
+        : null;
+
+    const fabric = config
+      ? await createResource<FameFabric>(baseTypeName, config, kwargs)
+      : await createDefaultResource<FameFabric>(baseTypeName, null, kwargs);
+
+    if (!fabric) {
+      throw new Error('No default FameFabricFactory registered');
+    }
+
+    return fabric;
   }
 
   /**
@@ -226,6 +297,40 @@ export abstract class FameFabric {
     }
   }
 }
+
+// If create() takes an options arg, this resolves to it; otherwise it's never | undefined.
+type FabricOpts = Parameters<typeof FameFabric.create>[0];
+
+export async function withFabric<T>(
+  fn: (fabric: FameFabric) => Promise<T>,
+): Promise<T>;
+
+export async function withFabric<T>(
+  opts: FabricOpts,
+  fn: (fabric: FameFabric) => Promise<T>,
+): Promise<T>;
+
+export async function withFabric<T>(
+  optsOrFn: FabricOpts | ((fabric: FameFabric) => Promise<T>),
+  maybeFn?: (fabric: FameFabric) => Promise<T>,
+): Promise<T> {
+  const fn = (typeof optsOrFn === "function" ? optsOrFn : maybeFn)!;
+  const opts = typeof optsOrFn === "function" ? undefined : optsOrFn;
+
+  // If create() has no params, the extra arg is ignored at compile time
+  // because FabricOpts will be never|undefined and opts will be undefined.
+  const fabric = await (opts === undefined
+    ? (FameFabric.create as () => Promise<FameFabric>)()
+    : (FameFabric.create as (o: FabricOpts) => Promise<FameFabric>)(opts));
+
+  await fabric.enter();
+  try {
+    return await fn(fabric);
+  } finally {
+    await fabric.exit?.();
+  }
+}
+
 
 // Export the fabric stack for testing
 export { fabricStack };

@@ -8,31 +8,43 @@ export {
   makeFameAddress,
   FameAddressSchema,
   type ValidatedFameAddress,
-} from './naylence/fame/core/address/address';
+} from './naylence/fame/core/address/address.js';
 
-export { type Addressable } from './naylence/fame/core/address/addressable';
+export { type Addressable } from './naylence/fame/core/address/addressable.js';
 
 // Util
-export { type Closeable } from './naylence/fame/core/util/closeable';
-export { DEFAULT_INVOKE_TIMEOUT_MILLIS, DEFAULT_POLLING_TIMEOUT_MS } from './naylence/fame/core/util/constants';
-export { generateId, generateIdAsync, type GenerateIdOptions, type BytesLike } from './naylence/fame/core/util/id-generator';
+export { type Closeable } from './naylence/fame/core/util/closeable.js';
+export { DEFAULT_INVOKE_TIMEOUT_MILLIS, DEFAULT_POLLING_TIMEOUT_MS } from './naylence/fame/core/util/constants.js';
+export { generateId, generateIdAsync, type GenerateIdOptions, type BytesLike } from './naylence/fame/core/util/id-generator.js';
 
 // Core
-export { type FameConfig, FameConfigSchema } from './naylence/fame/core/fame-config';
-export { type FameFabricConfig, FameFabricConfigSchema, type ResourceConfig } from './naylence/fame/core/fame-fabric-config';
-export { FameFabricFactory, type ResourceFactory } from './naylence/fame/core/fame-fabric-factory';
+export {
+  type FameConfig,
+  type FameConfigInput,
+  FameConfigSchema,
+  normalizeFameConfig,
+} from './naylence/fame/core/fame-config.js';
+export {
+  type FameConfigResolver,
+  setDefaultFameConfigResolver,
+  getDefaultFameConfigResolver,
+  resolveDefaultFameConfig,
+} from './naylence/fame/core/default-fame-config-resolver.js';
+export { type FameFabricConfig, FameFabricConfigSchema, type ResourceConfig } from './naylence/fame/core/fame-fabric-config.js';
+export { FameFabricFactory, type ResourceFactory } from './naylence/fame/core/fame-fabric-factory.js';
 export {
   FameFabric,
   resetFabricStack,
   fabricStack,
-} from './naylence/fame/core/fame-fabric';
+  withFabric,
+} from './naylence/fame/core/fame-fabric.js';
 
 // Protocol
-export { FameResponseType } from './naylence/fame/core/protocol/response-type';
-export { DeliveryOriginType } from './naylence/fame/core/protocol/origin-type';
-export { FlowFlags, type CreditUpdateFrame, CreditUpdateFrameSchema } from './naylence/fame/core/protocol/flow';
-export { type SecuritySettings, SigningMaterial, SecuritySettingsSchema } from './naylence/fame/core/protocol/security-settings';
-export { type SecurityHeader, SecurityHeaderSchema, type EncryptionHeader, type SignatureHeader } from './naylence/fame/core/protocol/security-header';
+export { FameResponseType } from './naylence/fame/core/protocol/response-type.js';
+export { DeliveryOriginType } from './naylence/fame/core/protocol/origin-type.js';
+export { FlowFlags, type CreditUpdateFrame, CreditUpdateFrameSchema } from './naylence/fame/core/protocol/flow.js';
+export { type SecuritySettings, SigningMaterial, SecuritySettingsSchema } from './naylence/fame/core/protocol/security-settings.js';
+export { type SecurityHeader, SecurityHeaderSchema, type EncryptionHeader, type SignatureHeader } from './naylence/fame/core/protocol/security-header.js';
 
 export {
   // Frame schemas and types
@@ -84,7 +96,7 @@ export {
   type SecureCloseFrame,
   type FameFrameUnion,
   type Stickiness,
-} from './naylence/fame/core/protocol/frames';
+} from './naylence/fame/core/protocol/frames.js';
 
 export {
   Priority,
@@ -100,7 +112,7 @@ export {
   type AllFramesUnion,
   serializeEnvelope,
   deserializeEnvelope,
-} from './naylence/fame/core/protocol/envelope';
+} from './naylence/fame/core/protocol/envelope.js';
 
 export {
   AuthorizationContextSchema,
@@ -112,9 +124,9 @@ export {
   type FameDeliveryContext,
   localDeliveryContext,
   createAuthorizationContext,
-} from './naylence/fame/core/protocol/delivery-context';
+} from './naylence/fame/core/protocol/delivery-context.js';
 
-export { type SenderProtocol, type Sender } from './naylence/fame/core/protocol/sender';
+export { type SenderProtocol, type Sender } from './naylence/fame/core/protocol/sender.js';
 
 export {
   FameChannelMessageSchema,
@@ -125,7 +137,7 @@ export {
   extractEnvelopeAndContext,
   isFameChannelMessage,
   isFameEnvelope,
-} from './naylence/fame/core/protocol/channel-message';
+} from './naylence/fame/core/protocol/channel-message.js';
 
 // Handlers
 export {
@@ -136,7 +148,7 @@ export {
   type FameRPCHandler,
   isFameMessageResponse,
   normalizeHandlerResponse,
-} from './naylence/fame/core/handlers/handlers';
+} from './naylence/fame/core/handlers/handlers.js';
 
 // Service
 export {
@@ -145,9 +157,9 @@ export {
   MCP_HOST_CAPABILITY,
   STANDARD_CAPABILITIES,
   type StandardCapability,
-} from './naylence/fame/core/service/capabilities';
+} from './naylence/fame/core/service/capabilities.js';
 
-export { Subscription } from './naylence/fame/core/service/subscription';
+export { Subscription } from './naylence/fame/core/service/subscription.js';
 
 export {
   type InvokeProtocol,
@@ -163,7 +175,7 @@ export {
   isFameMessageService,
   isFameRPCService,
   createServiceProxy,
-} from './naylence/fame/core/service/fame-service';
+} from './naylence/fame/core/service/fame-service.js';
 
 // RPC
 export {
@@ -183,7 +195,7 @@ export {
   isJSONRPCResponse,
   isJSONRPCErrorResponse,
   isJSONRPCSuccessResponse,
-} from './naylence/fame/core/rpc/types';
+} from './naylence/fame/core/rpc/types.js';
 
 export {
   makeRequest,
@@ -195,7 +207,7 @@ export {
   makeInternalError,
   makeParseError,
   makeInvalidRequestError,
-} from './naylence/fame/core/rpc/jsonrpc';
+} from './naylence/fame/core/rpc/jsonrpc.js';
 
 // Channel
 export {
@@ -208,20 +220,20 @@ export {
   isReadWriteChannel,
   BaseChannel,
   DEFAULT_CHANNEL_TIMEOUT,
-} from './naylence/fame/core/channel/channel';
+} from './naylence/fame/core/channel/channel.js';
 
-export { Binding } from './naylence/fame/core/channel/binding';
+export { Binding } from './naylence/fame/core/channel/binding.js';
 
 // Connector
 export {
   ConnectorState,
   ConnectorStateHelper,
   ConnectorStateUtils,
-} from './naylence/fame/core/connector/connector-state';
+} from './naylence/fame/core/connector/connector-state.js';
 
 export {
   type FameConnector,
   BaseFameConnector,
   isFameConnector,
   type ConnectorFactory,
-} from './naylence/fame/core/connector/connector';
+} from './naylence/fame/core/connector/connector.js';

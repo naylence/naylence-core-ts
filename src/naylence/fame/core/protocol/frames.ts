@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { FameAddressSchema } from '../address/address';
-import { DeliveryOriginType } from './origin-type';
-import { SecuritySettingsSchema } from './security-settings';
+import { FameAddressSchema } from '../address/address.js';
+import { DeliveryOriginType } from './origin-type.js';
+import { SecuritySettingsSchema } from './security-settings.js';
 
 // Base frame schema
 export const FameFrameSchema = z.object({
