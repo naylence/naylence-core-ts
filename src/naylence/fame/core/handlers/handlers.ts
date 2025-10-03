@@ -32,7 +32,12 @@ export type FameMessageHandler<T = any> = (
 export type FameEnvelopeHandler = (
   envelope: FameEnvelope,
   context?: FameDeliveryContext
-) => Promise<FameMessageResponse | null | undefined>;
+) => Promise<
+  | FameMessageResponse
+  | AsyncIterable<FameMessageResponse>
+  | null
+  | undefined
+>;
 
 /**
  * Type for RPC handlers that can return a result directly or a FameMessageResponse

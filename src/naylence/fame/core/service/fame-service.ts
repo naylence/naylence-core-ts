@@ -1,5 +1,9 @@
 import { FameAddress } from '../address/address.js';
-import { FameRPCHandler, FameEnvelopeHandler } from '../handlers/handlers.js';
+import {
+  FameRPCHandler,
+  FameEnvelopeHandler,
+  FameMessageResponse,
+} from '../handlers/handlers.js';
 import { FameEnvelope } from '../protocol/envelope.js';
 import { FameDeliveryContext } from '../protocol/delivery-context.js';
 import { DEFAULT_INVOKE_TIMEOUT_MILLIS } from '../util/constants.js';
@@ -46,7 +50,15 @@ export interface FameServiceFactory<T extends FameService = FameService> {
  * Fame service that handles messages
  */
 export interface FameMessageService extends FameService {
-  handleMessage(envelope: FameEnvelope, context?: FameDeliveryContext): Promise<void>;
+  handleMessage(
+    envelope: FameEnvelope,
+    context?: FameDeliveryContext
+  ): Promise<
+    | FameMessageResponse
+    | AsyncIterable<FameMessageResponse>
+    | null
+    | undefined
+  >;
 }
 
 /**

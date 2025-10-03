@@ -239,7 +239,14 @@ describe("FameService", () => {
     describe("isFameMessageService", () => {
       it("returns true for objects with handleMessage function", () => {
         const service = {
-          handleMessage: async (envelope: FameEnvelope, context?: FameDeliveryContext) => {}
+          handleMessage: async (
+            envelope: FameEnvelope,
+            context?: FameDeliveryContext
+          ) => {
+            void envelope;
+            void context;
+            return null;
+          }
         };
         
         expect(isFameMessageService(service)).toBe(true);
