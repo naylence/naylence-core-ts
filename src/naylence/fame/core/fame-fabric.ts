@@ -165,7 +165,11 @@ export abstract class FameFabric {
     if (fabricStack.length === 0) {
       throw new Error('No FameFabric active in this context');
     }
-    return fabricStack[fabricStack.length - 1];
+    const fabric = fabricStack[fabricStack.length - 1];
+    if (!fabric) {
+      throw new Error('No FameFabric active in this context');
+    }
+    return fabric;
   }
 
   // ----- async factory -------------------------------------------------------
@@ -280,7 +284,11 @@ export abstract class FameFabric {
   static async getOrCreate(options: Record<string, unknown> = {}): Promise<FameFabric> {
     if (fabricStack.length > 0) {
       // Return the existing fabric
-      return fabricStack[fabricStack.length - 1];
+      const fabric = fabricStack[fabricStack.length - 1];
+      if (!fabric) {
+        throw new Error('No FameFabric active in this context');
+      }
+      return fabric;
     }
     return FameFabric.create(options);
   }

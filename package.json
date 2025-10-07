@@ -21,18 +21,24 @@
     "url": "https://github.com/naylence/naylence-core-ts/issues"
   },
   "homepage": "https://github.com/naylence/naylence-core-ts#readme",
-  "main": "dist/cjs/naylence-core-ts/src/index.js",
-  "module": "dist/esm/naylence-core-ts/src/index.js",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/esm/naylence-core-ts/src/index.js",
-      "require": "./dist/cjs/naylence-core-ts/src/index.js",
-      "types": "./dist/types/index.d.ts"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "default": "./dist/esm/index.js"
     },
     "./browser": {
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/browser/index.js",
-      "types": "./dist/types/index.d.ts"
+      "default": "./dist/browser/index.js"
+    },
+    "./*": {
+      "types": "./dist/types/*",
+      "import": "./dist/esm/*",
+      "default": "./dist/esm/*"
     }
   },
   "files": [
@@ -42,11 +48,12 @@
     "NOTICE"
   ],
   "scripts": {
-  "build": "npm run clean && npm run build:types && npm run build:cjs && npm run build:esm && npm run build:browser",
+  "build": "npm run clean && npm run build:types && npm run build:cjs && npm run build:esm && npm run build:browser && npm run fix-source-maps",
   "build:types": "tsc --project tsconfig.types.json --emitDeclarationOnly && node ./scripts/postprocess-types.mjs",
     "build:cjs": "tsc --project tsconfig.cjs.json",
     "build:esm": "tsc --project tsconfig.esm.json",
     "build:browser": "rollup -c rollup.config.js",
+    "fix-source-maps": "node ./scripts/fix-source-maps.js",
     "clean": "rimraf dist",
     "test": "jest",
     "test:watch": "jest --watch",

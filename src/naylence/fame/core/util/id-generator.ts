@@ -74,7 +74,11 @@ function base62(n: bigint): string {
   while (n > 0n) {
     const rem = Number(n % 62n);
     n = n / 62n;
-    chars.push(ALPHABET[rem]);
+    const char = ALPHABET[rem];
+    if (char === undefined) {
+      throw new Error(`Invalid remainder ${rem} for base62 encoding`);
+    }
+    chars.push(char);
   }
   return chars.reverse().join('');
 }
@@ -86,9 +90,34 @@ function encodeDigest(digest: Uint8Array, length: number): string {
   // Convert bytes to bigint
   let n = 0n;
   for (let i = 0; i < digest.length; i++) {
-    n = (n << 8n) + BigInt(digest[i]);
+    const byte = digest[i];
+    if (byte === undefined) {
+      throw new Error(`Invalid digest byte at index ${i}`);
+    }
+    n = (n << 8n) + BigInt(byte);
   }
-  return base62(n).slice(0, length);
+  const base62Value = base62(n);
+  if (base62Value.length >= length) {
+    return base62Value.slice(0, length);
+  }
+  return base62Value.padStart(length, ALPHABET[0]);
+}
+
+function normalizeHashAlgorithmNames(algorithm: string): { subtle: string; node: string } {
+  const trimmed = algorithm.trim();
+  const lower = trimmed.toLowerCase();
+  const shaMatch = lower.match(/^(sha)([-_]?(\d{1,3}))$/);
+  if (shaMatch) {
+    const digits = shaMatch[3];
+    return {
+      subtle: `SHA-${digits}`,
+      node: `sha${digits}`,
+    };
+  }
+  return {
+    subtle: trimmed.toUpperCase(),
+    node: lower,
+  };
 }
 
 /**
@@ -218,10 +247,11 @@ function getRandomBytes(length: number): Uint8Array {
  * Create hash digest
  */
 function hash(data: Uint8Array, algorithm: string = 'sha256'): Uint8Array {
+  const { node } = normalizeHashAlgorithmNames(algorithm);
   try {
     const nodeCrypto = (globalThis as any).require?.('crypto');
     if (nodeCrypto?.createHash) {
-      const hash = nodeCrypto.createHash(algorithm);
+      const hash = nodeCrypto.createHash(node);
       hash.update(data);
       return new Uint8Array(hash.digest());
     }
@@ -232,7 +262,11 @@ function hash(data: Uint8Array, algorithm: string = 'sha256'): Uint8Array {
   // Fallback - very basic hash (not cryptographically secure)
   let hash = 0;
   for (let i = 0; i < data.length; i++) {
-    hash = ((hash << 5) - hash + data[i]) & 0xffffffff;
+    const byte = data[i];
+    if (byte === undefined) {
+      throw new Error(`Invalid data byte at index ${i}`);
+    }
+    hash = ((hash << 5) - hash + byte) & 0xffffffff;
   }
   const bytes = new Uint8Array(4);
   bytes[0] = (hash >>> 24) & 0xff;
@@ -245,14 +279,15 @@ function hash(data: Uint8Array, algorithm: string = 'sha256'): Uint8Array {
 /**
  * Create hash digest asynchronously (for browser compatibility)
  */
-async function hashAsync(data: Uint8Array, algorithm: string = 'SHA-256'): Promise<Uint8Array> {
+async function hashAsync(data: Uint8Array, algorithm: string = 'sha256'): Promise<Uint8Array> {
+  const { subtle, node } = normalizeHashAlgorithmNames(algorithm);
   if (typeof crypto !== 'undefined' && crypto.subtle) {
     try {
       // Browser environment - create a copy to ensure ArrayBuffer type
       const buffer = new ArrayBuffer(data.length);
       const view = new Uint8Array(buffer);
       view.set(data);
-      const hashBuffer = await crypto.subtle.digest(algorithm, buffer);
+      const hashBuffer = await crypto.subtle.digest(subtle, buffer);
       return new Uint8Array(hashBuffer);
     } catch {
       // Fallback if crypto.subtle fails
@@ -262,7 +297,7 @@ async function hashAsync(data: Uint8Array, algorithm: string = 'SHA-256'): Promi
   try {
     const nodeCrypto = (globalThis as any).require?.('crypto');
     if (nodeCrypto?.createHash) {
-      const hash = nodeCrypto.createHash(algorithm.toLowerCase().replace('-', ''));
+      const hash = nodeCrypto.createHash(node);
       hash.update(data);
       return new Uint8Array(hash.digest());
     }
@@ -303,7 +338,11 @@ export function generateId(options: GenerateIdOptions = {}): string {
       let candidate = '';
       const randomBytes = getRandomBytes(length);
       for (let i = 0; i < length; i++) {
-        candidate += ALPHABET[randomBytes[i] % ALPHABET.length];
+        const byte = randomBytes[i];
+        if (byte === undefined) {
+          throw new Error(`Invalid random byte at index ${i}`);
+        }
+        candidate += ALPHABET[byte % ALPHABET.length];
       }
       
       if (!Array.from(blacklist).some(bad => candidate.toLowerCase().includes(bad))) {
@@ -336,8 +375,12 @@ export function generateId(options: GenerateIdOptions = {}): string {
       if (i > 0) {
         materialBytes[offset++] = 124; // '|' character
       }
-      materialBytes.set(parts[i], offset);
-      offset += parts[i].length;
+      const part = parts[i];
+      if (part === undefined) {
+        throw new Error(`Invalid part at index ${i}`);
+      }
+      materialBytes.set(part, offset);
+      offset += part.length;
     }
   } else {
     if (typeof material === 'string') {
@@ -380,7 +423,11 @@ export async function generateIdAsync(options: GenerateIdOptions = {}): Promise<
       let candidate = '';
       const randomBytes = getRandomBytes(length);
       for (let i = 0; i < length; i++) {
-        candidate += ALPHABET[randomBytes[i] % ALPHABET.length];
+        const byte = randomBytes[i];
+        if (byte === undefined) {
+          throw new Error(`Invalid random byte at index ${i}`);
+        }
+        candidate += ALPHABET[byte % ALPHABET.length];
       }
       
       if (!Array.from(blacklist).some(bad => candidate.toLowerCase().includes(bad))) {
@@ -408,8 +455,12 @@ export async function generateIdAsync(options: GenerateIdOptions = {}): Promise<
       if (i > 0) {
         materialBytes[offset++] = 124; // '|' character
       }
-      materialBytes.set(parts[i], offset);
-      offset += parts[i].length;
+      const part = parts[i];
+      if (part === undefined) {
+        throw new Error(`Invalid part at index ${i}`);
+      }
+      materialBytes.set(part, offset);
+      offset += part.length;
     }
   } else {
     if (typeof material === 'string') {
@@ -419,12 +470,12 @@ export async function generateIdAsync(options: GenerateIdOptions = {}): Promise<
     }
   }
 
-  let digest = await hashAsync(materialBytes, hashAlg.toUpperCase().replace(/(\d)/g, '-$1'));
+  let digest = await hashAsync(materialBytes, hashAlg);
   let candidate = encodeDigest(digest, length);
 
   // Check blacklist and re-hash if needed
   while (Array.from(blacklist).some(bad => candidate.toLowerCase().includes(bad))) {
-    digest = await hashAsync(digest, hashAlg.toUpperCase().replace(/(\d)/g, '-$1'));
+    digest = await hashAsync(digest, hashAlg);
     candidate = encodeDigest(digest, length);
   }
 

@@ -5,10 +5,8 @@ import { FameFabricFactory } from '../naylence/fame/core/fame-fabric-factory';
 import { FameFabric } from '../naylence/fame/core/fame-fabric';
 import { _resetBootstrapStateForTests } from '../naylence/fame/core/plugins/bootstrap';
 import { ExtensionManager } from 'naylence-factory';
-import {
-  registerFactoryManifest,
-  type FactoryManifest,
-} from '../../../naylence-factory-ts/src/manifest';
+import { registerFactoryManifest } from 'naylence-factory';
+import type { FactoryManifest } from '../../../naylence-factory-ts/src/manifest';
 
 type PluginHandler = jest.MockedFunction<() => Promise<void>>;
 
@@ -93,7 +91,8 @@ describe('FameConfig plugin bootstrapping', () => {
 
     expect(handler).toHaveBeenCalledTimes(1);
 
-    const registry = ExtensionManager.getExtensionsByType<FameFabric>('FameFabricFactory');
+    const registry =
+      ExtensionManager.getExtensionsByType<FameFabric>('FameFabricFactory');
     expect(Array.from(registry.keys())).toContain(factoryType);
 
     ExtensionManager.unregisterGlobalFactory('FameFabricFactory', factoryType);
@@ -124,7 +123,7 @@ describe('FameConfig plugin bootstrapping', () => {
 
   it('is safe when process.env is unavailable (browser environments)', async () => {
     const handler = usePluginHandler('env-default');
-  process.env.FAME_PLUGINS = ENV_PLUGIN_MODULE;
+    process.env.FAME_PLUGINS = ENV_PLUGIN_MODULE;
 
     const originalProcess = globalThis.process;
     (globalThis as unknown as { process?: unknown }).process = undefined;
@@ -135,15 +134,16 @@ describe('FameConfig plugin bootstrapping', () => {
       // process.env should be ignored when process is undefined
       expect(handler).not.toHaveBeenCalled();
     } finally {
-      (globalThis as unknown as { process?: unknown }).process = originalProcess;
+      (globalThis as unknown as { process?: unknown }).process =
+        originalProcess;
     }
   });
 
   it('initializes plugins only once even when normalizeFameConfig is called multiple times', async () => {
     const handler = usePluginHandler('idempotent-plugin');
 
-  await normalizeFameConfig({ plugins: [IDEMPOTENT_PLUGIN_MODULE] });
-  await normalizeFameConfig({ plugins: [IDEMPOTENT_PLUGIN_MODULE] });
+    await normalizeFameConfig({ plugins: [IDEMPOTENT_PLUGIN_MODULE] });
+    await normalizeFameConfig({ plugins: [IDEMPOTENT_PLUGIN_MODULE] });
 
     expect(handler).toHaveBeenCalledTimes(1);
   });

@@ -3,11 +3,11 @@ import resolve from '@rollup/plugin-node-resolve';
 import { existsSync } from 'node:fs';
 import { resolve as resolvePath } from 'node:path';
 
-const esmEntry = resolvePath('dist/esm/naylence-core-ts/src/index.js');
+const esmEntry = resolvePath('dist/esm/index.js');
 
 if (!existsSync(esmEntry)) {
   throw new Error(
-    'Browser build requires dist/esm/naylence-core-ts/src/index.js. Run "npm run build:esm" before bundling or use "npm run build".'
+    'Browser build requires dist/esm/index.js. Run "npm run build:esm" before bundling or use "npm run build".'
   );
 }
 

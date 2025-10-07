@@ -1,30 +1,49 @@
+/** @type {import('ts-jest').JestConfigWithTsJest} */
 export default {
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
+  extensionsToTreatAsEsm: ['.ts'],
+  roots: [
+    '<rootDir>/src',
+  ],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^naylence-factory$': '<rootDir>/../naylence-factory-ts/src/index.ts',
-    '^naylence-factory/(.*)$': '<rootDir>/../naylence-factory-ts/src/$1',
+    '^naylence-factory$': '<rootDir>/../naylence-factory-ts/dist/cjs/index.js',
+    '^naylence-factory-ts$': '<rootDir>/../naylence-factory-ts/dist/cjs/index.js',
   },
-  roots: ['<rootDir>/src'],
-  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   transform: {
-    '^.+\\.ts$': ['ts-jest', {
-      tsconfig: 'tsconfig.jest.json',
-    }],
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        useESM: true,
+        tsconfig: {
+          module: 'ESNext',
+          moduleResolution: 'bundler',
+          esModuleInterop: true,
+          allowSyntheticDefaultImports: true,
+          isolatedModules: true,
+          sourceMap: true,
+          inlineSources: true,
+          inlineSourceMap: false, // Use separate source maps for better debugging
+        },
+        diagnostics: {
+          ignoreCodes: [151001],
+        },
+      },
+    ],
   },
-  transformIgnorePatterns: [
-    '[/\\\\]dist[/\\\\]',
+  testMatch: [
+    '**/__tests__/**/*.test.ts',
   ],
-  testPathIgnorePatterns: ['<rootDir>/dist/', '<rootDir>/src/__tests__/setup.ts'],
   collectCoverageFrom: [
     'src/**/*.ts',
-    '!src/**/*.d.ts',
+    '<rootDir>/../naylence-factory-ts/src/**/*.ts',
+    '!src/**/*.test.ts',
+    '!<rootDir>/../naylence-factory-ts/src/**/*.test.ts',
     '!src/**/__tests__/**',
-    '!src/**/index.ts',
+    '!<rootDir>/../naylence-factory-ts/src/**/__tests__/**',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   setupFilesAfterEnv: ['<rootDir>/test/jest.setup.js'],
-  maxWorkers: 1,
 };
