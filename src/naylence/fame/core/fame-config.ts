@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ensurePluginsLoadedFromConfig } from './plugins/bootstrap.js';
+import { snakeToCamelObject } from './util/case-conversion.js';
 
 const PluginEntrySchema = z.union([
   z.string(),
@@ -9,7 +10,8 @@ const PluginEntrySchema = z.union([
   }),
 ]);
 
-export const FameConfigSchema = z
+// Export the base schema for extension
+export const FameConfigBaseSchema = z
   .object({
     fabric: z.any().optional().describe('Fame fabric config'),
     plugins: z.array(PluginEntrySchema).optional().default([]),
@@ -21,7 +23,13 @@ export const FameConfigSchema = z
   })
   .loose();
 
-export type FameConfig = z.infer<typeof FameConfigSchema>;
+// Apply preprocessing to the base schema for snake_case support
+export const FameConfigSchema = z.preprocess(
+  snakeToCamelObject,
+  FameConfigBaseSchema
+);
+
+export type FameConfig = z.infer<typeof FameConfigBaseSchema>;
 export type FameConfigInput = z.input<typeof FameConfigSchema>;
 
 export async function normalizeFameConfig(

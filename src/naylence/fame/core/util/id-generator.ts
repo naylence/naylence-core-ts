@@ -158,16 +158,23 @@ function getCanonicalArgv(): string {
 async function getDefaultNodeFingerprint(extraMaterial?: BytesLike): Promise<Uint8Array> {
   let hostFp: string;
   
-  // Try to get MAC address or hostname
-  if (typeof navigator !== 'undefined' && navigator.userAgent) {
-    // Browser environment - use a hash of user agent
-    hostFp = `ua:${navigator.userAgent}`;
-  } else {
+  // Check for Node.js environment FIRST (before navigator check)
+  // This is critical because Node.js v24+ has a global navigator object
+  if (typeof process !== 'undefined' && (process as any).versions?.node) {
     try {
-      // Try Node.js environment
+      // Node.js environment - use MAC address or hostname
+      // Try to get os module - works in both CJS and ESM
+      let os: any;
       const req = (globalThis as any).require;
       if (req) {
-        const os = req('os');
+        // CommonJS environment
+        os = req('os');
+      } else {
+        // ESM environment - use dynamic import
+        os = await import('os');
+      }
+      
+      if (os) {
         const networkInterfaces = os.networkInterfaces();
         
         // Try to find a MAC address
@@ -183,16 +190,23 @@ async function getDefaultNodeFingerprint(extraMaterial?: BytesLike): Promise<Uin
         }
         
         if (mac) {
-          hostFp = `mac:${mac}`;
+          // Normalize MAC format to match Python implementation (remove colons)
+          const normalizedMac = mac.replace(/:/g, '').toLowerCase();
+          hostFp = `mac:${normalizedMac}`;
         } else {
           hostFp = `hn:${os.hostname()}`;
         }
       } else {
         hostFp = 'unknown';
       }
-    } catch {
+    } catch (e) {
       hostFp = 'unknown';
     }
+  } else if (typeof navigator !== 'undefined' && navigator.userAgent) {
+    // Browser environment - use a hash of user agent
+    hostFp = `ua:${navigator.userAgent}`;
+  } else {
+    hostFp = 'unknown';
   }
   
   // Code + argv part
