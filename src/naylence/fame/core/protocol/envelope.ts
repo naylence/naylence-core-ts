@@ -36,6 +36,33 @@ const AllFramesUnionSchema = z.union([
 
 export type AllFramesUnion = z.infer<typeof AllFramesUnionSchema>;
 
+const TimestampSchema = z
+  .preprocess((value) => {
+    if (value instanceof Date) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    return value;
+  }, z.date())
+  .describe('UTC timestamp when the envelope was created');
+
+const FLOW_FLAG_MASK =
+  FlowFlags.SYN | FlowFlags.ACK | FlowFlags.RESET;
+
+const FlowFlagsSchema = z
+  .number()
+  .int()
+  .min(0)
+  .refine((value) => (value & ~FLOW_FLAG_MASK) === 0, {
+    message: 'FlowFlags contains unsupported bits',
+  })
+  .transform((value) => value as FlowFlags);
+
 // Fame envelope schema
 export const FameEnvelopeSchema = z.object({
   version: z.string().default(ENVELOPE_VERSION).optional(),
@@ -70,7 +97,7 @@ export const FameEnvelopeSchema = z.object({
   seqId: z.number().default(0).optional()
     .describe('Monotonic counter per-sender to order envelopes if needed'),
   
-  flowFlags: z.nativeEnum(FlowFlags).default(FlowFlags.NONE).optional()
+  flowFlags: FlowFlagsSchema.default(FlowFlags.NONE).optional()
     .describe('Flags controlling flow behavior (e.g., start/end of window)'),
   
   ttl: z.number().optional()
@@ -82,8 +109,7 @@ export const FameEnvelopeSchema = z.object({
   frame: AllFramesUnionSchema
     .describe('The actual payload frame (e.g. DataFrame, NodeHeartbeatFrame)'),
   
-  ts: z.date().default(() => new Date())
-    .describe('UTC timestamp when the envelope was created'),
+  ts: TimestampSchema.default(() => new Date()),
   
   sec: SecurityHeaderSchema.optional()
     .describe('Optional security header'),

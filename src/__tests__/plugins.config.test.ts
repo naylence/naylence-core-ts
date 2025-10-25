@@ -4,14 +4,13 @@ import { normalizeFameConfig } from '../naylence/fame/core/fame-config';
 import { FameFabricFactory } from '../naylence/fame/core/fame-fabric-factory';
 import { FameFabric } from '../naylence/fame/core/fame-fabric';
 import { _resetBootstrapStateForTests } from '../naylence/fame/core/plugins/bootstrap';
-import { ExtensionManager } from 'naylence-factory';
-import { registerFactoryManifest } from 'naylence-factory';
+import { ExtensionManager } from '@naylence/factory';
+import { registerFactoryManifest } from '@naylence/factory';
 import type { FactoryManifest } from '../../../naylence-factory-ts/src/manifest';
 
 type PluginHandler = jest.MockedFunction<() => Promise<void>>;
 
 declare global {
-  // eslint-disable-next-line no-var
   var __testPluginHandlers: Map<string, PluginHandler> | undefined;
 }
 

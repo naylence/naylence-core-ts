@@ -8,8 +8,8 @@ export default {
   ],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^naylence-factory$': '<rootDir>/../naylence-factory-ts/dist/cjs/index.js',
-    '^naylence-factory-ts$': '<rootDir>/../naylence-factory-ts/dist/cjs/index.js',
+    '^@naylence/factory$': '<rootDir>/node_modules/@naylence/factory/dist/cjs/index.js',
+    '^@naylence/factory/(.*)$': '<rootDir>/node_modules/@naylence/factory/dist/cjs/$1',
   },
   transform: {
     '^.+\\.ts$': [
@@ -37,11 +37,8 @@ export default {
   ],
   collectCoverageFrom: [
     'src/**/*.ts',
-    '<rootDir>/../naylence-factory-ts/src/**/*.ts',
     '!src/**/*.test.ts',
-    '!<rootDir>/../naylence-factory-ts/src/**/*.test.ts',
     '!src/**/__tests__/**',
-    '!<rootDir>/../naylence-factory-ts/src/**/__tests__/**',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],

@@ -1,105 +1,53 @@
-# Naylence Core TypeScript
+[![Join our Discord](https://img.shields.io/badge/Discord-Join%20Chat-blue?logo=discord)](https://discord.gg/nwZAeqdv7y)
 
-TypeScript/JavaScript port of the naylence-core-python project.
+# Naylence Fame Core
 
-## Project Status
+**Fame Core** is the low-level messaging backbone for the [Naylence](https://github.com/naylence) platform, providing the essential types, protocols, and interfaces for high-performance, addressable, and semantically routable message passing between AI agents and services.
 
-### ✅ Completed
-- **Project Setup**: Full TypeScript project with build tools for both Node.js and browser compatibility
-- **Address Module**: Complete port of address validation and parsing
-- **Utility Modules**: ID generation with async support for browser/Node.js environments  
-- **Core Configuration**: Config classes and factory patterns
-- **FameFabric**: Base fabric class with context management
-- **Build System**: Multi-target builds (CJS, ESM, browser)
-- **Testing**: Jest setup with basic tests
+> Part of the Naylence stack. See the full platform [here](https://github.com/naylence).
 
-### 🚧 Partially Completed
-- **Core Modules**: Basic structure for FameFabric, but missing protocol, handlers, services
+## Development & Publishing
 
-### ❌ Not Yet Ported
-- Channel, connector, handlers modules
-- Protocol (envelopes, frames, security)
-- RPC system
-- Service framework
-- Full factory integration with naylence-factory
+This project uses npm for dependency management and GitHub Actions for automated testing and publishing.
 
-## Key Implementation Decisions
-
-### 1. ID Generation Async Challenge
-**Challenge**: Browser crypto APIs are async while Python's are sync.
-
-**Solution**: Provided both sync (`generateId`) and async (`generateIdAsync`) variants:
-- `generateId()`: Works synchronously in Node.js, throws in browser for fingerprint mode
-- `generateIdAsync()`: Works in both environments, should be preferred
-
-### 2. Browser/Node.js Compatibility
-**Implementation**: Used feature detection instead of build-time switches:
-```typescript
-// Crypto detection
-if (typeof crypto !== 'undefined' && crypto.subtle) {
-  // Browser crypto
-} else if (typeof globalThis !== 'undefined' && (globalThis as any).require) {
-  // Node.js crypto
-}
-```
-
-### 3. Type Safety vs Python Flexibility
-**Approach**: Used Zod for runtime validation while maintaining TypeScript compile-time safety, similar to Pydantic's approach in Python.
-
-## Usage
-
-```typescript
-import { FameAddress, generateIdAsync, FameFabric } from 'naylence-core';
-
-// Address validation
-const address = new FameAddress('service@host.domain/api/v1');
-
-// ID generation (async recommended for browser compatibility)
-const id = await generateIdAsync({ length: 16, mode: 'random' });
-
-// Fabric usage (when fully implemented)
-const fabric = await FameFabric.create({ /* config */ });
-await fabric.use(async (f) => {
-  // Use fabric
-});
-```
-
-## Next Steps
-
-To complete the port, the following modules need implementation:
-
-1. **Protocol Layer** (`protocol/`):
-   - `envelope.ts` - Message envelopes
-   - `frames.ts` - Protocol frames
-   - `security-header.ts` - Security headers
-
-2. **Handler System** (`handlers/`):
-   - `handlers.ts` - Message and RPC handlers
-
-3. **Service Framework** (`service/`):
-   - `fame-service.ts` - Service base classes
-   - `capabilities.ts` - Service capabilities
-
-4. **Channel System** (`channel/`):
-   - `channel.ts` - Communication channels
-   - `binding.ts` - Channel bindings
-
-5. **Connector Framework** (`connector/`):
-   - `connector.ts` - Connection management
-
-6. **RPC System** (`rpc/`):
-   - `jsonrpc.ts` - JSON-RPC implementation
-
-## Build Targets
-
-- **CJS**: `dist/cjs/` - CommonJS for Node.js
-- **ESM**: `dist/esm/` - ES modules for modern Node.js
-- **Browser**: `dist/browser/` - Browser-compatible bundle
-- **Types**: `dist/types/` - TypeScript declarations
-
-## Testing
+### Local Development
 
 ```bash
-npm test        # Run all tests
-npm run build   # Build all targets
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Run linting
+npm run lint
+
+# Build package
+npm run build
 ```
+
+#### Using local sibling dependencies during development
+
+This project depends on `naylence-factory`. In development, you can point npm to a local checkout without changing `package.json`:
+
+```bash
+# Option A: temporary override using npm link
+cd ../naylence-factory-ts
+npm link
+cd ../naylence-core-ts
+npm link naylence-factoria
+
+# Option B: direct path in package.json (temporary)
+npm install ../naylence-factory-ts
+
+# Option C: using file: protocol
+npm install --save-dev file:../naylence-factory-ts
+```
+
+When committing, keep `package.json` referencing the normal package (not the local path). CI will install from npm registry via configured sources.
+
+### Publishing
+
+- **Automatic**: Create a GitHub release to automatically publish to npm
+- **Manual**: Use the "Publish to npm" workflow dispatch to publish to npm test registry or npm
+- **Local**: Use `npm publish --registry https://registry.npmjs.org/` for local testing

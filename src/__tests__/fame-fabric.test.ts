@@ -11,7 +11,7 @@ import {
 import { FameFabricFactory } from '../naylence/fame/core/fame-fabric-factory';
 import { setDefaultFameConfigResolver } from '../naylence/fame/core/default-fame-config-resolver';
 import type { FameFabricConfig } from '../naylence/fame/core/fame-fabric-config';
-import { ExtensionManager } from 'naylence-factory';
+import { ExtensionManager } from '@naylence/factory';
 import { FameAddress } from '../naylence/fame/core/address/address';
 import {
   DataFrameSchema,

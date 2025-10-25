@@ -44,7 +44,7 @@ export default [
       'no-unused-vars': 'off',
       'no-undef': 'off',  // TypeScript handles this
       // Keep style rules
-      'quotes': ['error', 'double', { 'avoidEscape': true }],
+      'quotes': ['error', 'single', { 'avoidEscape': true }],
       'semi': ['error', 'always'],
     },
   },

@@ -10,7 +10,7 @@ import {
   ExtensionManager,
   createDefaultResource,
   createResource,
-} from 'naylence-factory';
+} from '@naylence/factory';
 import { resolveDefaultFameConfig } from './default-fame-config-resolver.js';
 
 // Context variable stack for fabric instances

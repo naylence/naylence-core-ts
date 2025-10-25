@@ -25,5 +25,5 @@ export default {
     }),
     commonjs(),
   ],
-  external: (id) => id === 'naylence-factory' || id === 'naylence-factory-ts' || id.startsWith('zod'),
+  external: (id) => id === '@naylence/factory' || id === 'naylence-factory-ts' || id.startsWith('zod'),
 };

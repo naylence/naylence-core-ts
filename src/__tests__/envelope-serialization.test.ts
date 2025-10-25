@@ -119,6 +119,28 @@ describe('Envelope Serialization', () => {
       expect(envelope.ts.toISOString()).toBe('2023-12-01T10:30:00.000Z');
     });
 
+    it('should accept ISO timestamp strings and coerce them to Date', () => {
+      const frame = createDataFrame();
+      const envelope = FameEnvelopeSchema.parse({
+        frame,
+        ts: '2024-05-30T12:45:15.123Z',
+      });
+
+      expect(envelope.ts).toBeInstanceOf(Date);
+      expect(envelope.ts.toISOString()).toBe('2024-05-30T12:45:15.123Z');
+    });
+
+    it('should reject invalid timestamp strings', () => {
+      const frame = createDataFrame();
+
+      expect(() =>
+        FameEnvelopeSchema.parse({
+          frame,
+          ts: 'not-a-valid-date',
+        })
+      ).toThrow();
+    });
+
     it('should validate meta value types', () => {
       const frame = createDataFrame();
 

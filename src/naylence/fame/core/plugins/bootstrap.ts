@@ -1,9 +1,9 @@
 import type { FameConfig } from '../fame-config.js';
-import type { PluginSpec } from 'naylence-factory';
+import type { PluginSpec } from '@naylence/factory';
 import {
   loadPluginsFromSpecs,
   readFactoryManifestIfAny,
-} from 'naylence-factory';
+} from '@naylence/factory';
 
 let bootstrapped = false;
 
