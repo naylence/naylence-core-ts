@@ -10,6 +10,7 @@ export default {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@naylence/factory$': '<rootDir>/node_modules/@naylence/factory/dist/cjs/index.js',
     '^@naylence/factory/(.*)$': '<rootDir>/node_modules/@naylence/factory/dist/cjs/$1',
+    '^@naylence/core/browser$': '<rootDir>/src/browser/index.ts',
   },
   transform: {
     '^.+\\.ts$': [
