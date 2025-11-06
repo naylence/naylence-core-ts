@@ -1,6 +1,6 @@
 {
   "name": "@naylence/core",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "type": "module",
   "description": "Naylence Core - TypeScript implementation",
   "author": "Naylence Dev <naylencedev@gmail.com>",
@@ -81,7 +81,7 @@
     "prepublishOnly": "npm run build && npm run test"
   },
   "dependencies": {
-    "@naylence/factory": "^0.1.1",
+    "@naylence/factory": "^0.1.2",
     "zod": "^4.1.11"
   },
   "devDependencies": {
