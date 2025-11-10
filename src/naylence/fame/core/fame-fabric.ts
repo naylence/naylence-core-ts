@@ -158,6 +158,29 @@ export abstract class FameFabric {
     }
   }
 
+  /** Temporarily makes this instance current for fn. No lifecycle. */
+  async scope<T>(fn: (fabric: FameFabric) => Promise<T>): Promise<T> {
+    const onTop = fabricStack.length > 0 && fabricStack[fabricStack.length - 1] === this;
+    if (!onTop) {
+      fabricStack.push(this);
+    }
+
+    try {
+      return await fn(this);
+    } finally {
+      if (!onTop) {
+        const last = fabricStack.pop();
+        if (last !== this) {
+          if (last) {
+            fabricStack.push(last);
+          }
+          // eslint-disable-next-line no-console
+          console.error('FameFabric.scope: stack mismatch');
+        }
+      }
+    }
+  }
+
   /**
    * Return the FameFabric at the top of the task-local stack, or throw.
    */
@@ -327,6 +350,38 @@ export async function withFabric<T>(
 
   // If create() has no params, the extra arg is ignored at compile time
   // because FabricOpts will be never|undefined and opts will be undefined.
+  const fabric = await (opts === undefined
+    ? (FameFabric.create as () => Promise<FameFabric>)()
+    : (FameFabric.create as (o: FabricOpts) => Promise<FameFabric>)(opts));
+
+  await fabric.enter();
+  try {
+    return await fn(fabric);
+  } finally {
+    await fabric.exit?.();
+  }
+}
+
+export async function withCurrentFabric<T>(
+  fn: (fabric: FameFabric) => Promise<T>,
+): Promise<T>;
+
+export async function withCurrentFabric<T>(
+  opts: FabricOpts,
+  fn: (fabric: FameFabric) => Promise<T>,
+): Promise<T>;
+
+export async function withCurrentFabric<T>(
+  optsOrFn: FabricOpts | ((fabric: FameFabric) => Promise<T>),
+  maybeFn?: (fabric: FameFabric) => Promise<T>,
+): Promise<T> {
+  const fn = (typeof optsOrFn === 'function' ? optsOrFn : maybeFn)!;
+  const opts = typeof optsOrFn === 'function' ? undefined : optsOrFn;
+
+  if (fabricStack.length > 0) {
+    return fn(FameFabric.current());
+  }
+
   const fabric = await (opts === undefined
     ? (FameFabric.create as () => Promise<FameFabric>)()
     : (FameFabric.create as (o: FabricOpts) => Promise<FameFabric>)(opts));

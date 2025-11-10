@@ -7,6 +7,8 @@ import {
   FameService,
   resetFabricStack,
   fabricStack,
+  withFabric,
+  withCurrentFabric,
 } from '../naylence/fame/core/fame-fabric';
 import { FameFabricFactory } from '../naylence/fame/core/fame-fabric-factory';
 import { setDefaultFameConfigResolver } from '../naylence/fame/core/default-fame-config-resolver';
@@ -17,6 +19,7 @@ import {
   DataFrameSchema,
   type DataFrame,
 } from '../naylence/fame/core/protocol/frames';
+import { runWithFabric } from '../naylence/fame/core/run-with-fabric';
 
 // Mock concrete implementation for testing
 class MockFameFabric extends FameFabric {
@@ -24,12 +27,15 @@ class MockFameFabric extends FameFabric {
   public stopCalled = false;
   public shouldThrowOnStart = false;
   public shouldThrowOnStop = false;
+  public startCount = 0;
+  public stopCount = 0;
 
   async start(): Promise<void> {
     if (this.shouldThrowOnStart) {
       throw new Error('Start failed');
     }
     this.startCalled = true;
+    this.startCount += 1;
   }
 
   async stop(): Promise<void> {
@@ -37,6 +43,7 @@ class MockFameFabric extends FameFabric {
       throw new Error('Stop failed');
     }
     this.stopCalled = true;
+    this.stopCount += 1;
   }
 
   async send(
@@ -591,6 +598,81 @@ describe('Fame Fabric', () => {
       expect(fabricStack.length).toBe(2);
       // Note: This test documents the current behavior, which may not be ideal
       // but is how the current implementation works
+    });
+  });
+
+  describe('Fabric helper utilities', () => {
+    it('withFabric should always create a new fabric for nested calls', async () => {
+      await withFabric(async (fabric1) => {
+        await withFabric(async (fabric2) => {
+          expect(fabric2).not.toBe(fabric1);
+        });
+      });
+    });
+
+    it('withCurrentFabric should reuse an existing fabric when present', async () => {
+      await withFabric(async (outerFabric) => {
+        await withCurrentFabric(async (currentFabric) => {
+          expect(currentFabric).toBe(outerFabric);
+        });
+      });
+    });
+
+    it('withCurrentFabric should create and clean up when no fabric is active', async () => {
+      let capturedFabric: MockFameFabric | null = null;
+
+      await withCurrentFabric(async (fabric) => {
+        capturedFabric = fabric as MockFameFabric;
+        expect(capturedFabric.startCalled).toBe(true);
+        expect(capturedFabric.stopCalled).toBe(false);
+      });
+
+      expect(capturedFabric).not.toBeNull();
+      if (!capturedFabric) {
+        throw new Error('Expected a captured fabric instance');
+      }
+      const fabricInstance: MockFameFabric = capturedFabric;
+      expect(fabricInstance.stopCalled).toBe(true);
+      expect(fabricInstance.startCount).toBe(1);
+      expect(fabricInstance.stopCount).toBe(1);
+      expect(fabricStack.length).toBe(0);
+    });
+
+    it('scope should route current fabric through nested scopes', async () => {
+      const fabricA = new MockFameFabric();
+      const fabricB = new MockFameFabric();
+
+      await fabricA.scope(async () => {
+        expect(FameFabric.current()).toBe(fabricA);
+        await fabricB.scope(async () => {
+          expect(FameFabric.current()).toBe(fabricB);
+        });
+        expect(FameFabric.current()).toBe(fabricA);
+      });
+      expect(fabricStack.length).toBe(0);
+    });
+
+    it('scope should restore the stack when an error occurs', async () => {
+      const fabric = new MockFameFabric();
+
+      await expect(
+        fabric.scope(async () => {
+          throw new Error('boom');
+        })
+      ).rejects.toThrow('boom');
+
+      expect(fabricStack.length).toBe(0);
+      expect(() => FameFabric.current()).toThrow(
+        'No FameFabric active in this context'
+      );
+    });
+
+    it('runWithFabric should delegate to scope', async () => {
+      const fabric = new MockFameFabric();
+      const result = await runWithFabric(fabric, async () => 'ok');
+
+      expect(result).toBe('ok');
+      expect(fabricStack.length).toBe(0);
     });
   });
 

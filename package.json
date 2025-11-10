@@ -1,8 +1,8 @@
 {
   "name": "@naylence/core",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "type": "module",
-  "description": "Naylence Core - TypeScript implementation",
+  "description": "Naylence Core for TypeScript",
   "author": "Naylence Dev <naylencedev@gmail.com>",
   "license": "Apache-2.0",
   "keywords": [
