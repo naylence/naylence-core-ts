@@ -210,7 +210,8 @@ describe('ConnectorState', () => {
         expect(allStates).toContain(ConnectorState.STARTED);
         expect(allStates).toContain(ConnectorState.STOPPED);
         expect(allStates).toContain(ConnectorState.CLOSED);
-        expect(allStates).toHaveLength(5);
+        expect(allStates).toContain(ConnectorState.PAUSED);
+        expect(allStates).toHaveLength(6);
       });
 
       it('should parse valid state strings', () => {
@@ -242,6 +243,12 @@ describe('ConnectorState', () => {
 
 describe('BaseFameConnector', () => {
   class TestConnector extends BaseFameConnector {
+    protected onPause(): Promise<void> {
+      throw new Error('Method not implemented.');
+    }
+    protected onResume(): Promise<void> {
+      throw new Error('Method not implemented.');
+    }
     protected async onStart(): Promise<void> {
       // Test implementation
     }

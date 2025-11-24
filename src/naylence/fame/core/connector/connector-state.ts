@@ -11,6 +11,7 @@
  * - UNKNOWN: Initial or indeterminate state
  * - INITIALIZED: Connector has been created and configured
  * - STARTED: Connector is actively running and processing messages
+ * - PAUSED: Connector is temporarily suspended (e.g., tab inactive) but can resume
  * - STOPPED: Connector has been stopped but may be restartable
  * - CLOSED: Connector has been permanently closed and cannot be restarted
  */
@@ -18,6 +19,7 @@ export enum ConnectorState {
   UNKNOWN = 'unknown',
   INITIALIZED = 'initialized',
   STARTED = 'started',
+  PAUSED = 'paused',
   STOPPED = 'stopped',
   CLOSED = 'closed',
 }
@@ -32,7 +34,7 @@ export class ConnectorStateHelper {
    * Return true if the connector is in an active state
    */
   get isActive(): boolean {
-    return this.state === ConnectorState.STARTED;
+    return this.state === ConnectorState.STARTED || this.state === ConnectorState.PAUSED;
   }
 
   /**
@@ -53,7 +55,7 @@ export class ConnectorStateHelper {
    * Return true if the connector can be stopped from this state
    */
   get canStop(): boolean {
-    return this.state === ConnectorState.STARTED;
+    return this.state === ConnectorState.STARTED || this.state === ConnectorState.PAUSED;
   }
 
   /**
@@ -63,6 +65,7 @@ export class ConnectorStateHelper {
     return (
       this.state === ConnectorState.INITIALIZED ||
       this.state === ConnectorState.STARTED ||
+      this.state === ConnectorState.PAUSED ||
       this.state === ConnectorState.STOPPED
     );
   }

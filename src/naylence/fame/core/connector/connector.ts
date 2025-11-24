@@ -19,6 +19,16 @@ export interface FameConnector {
   stop(): Promise<void>;
 
   /**
+   * Pause the connector (suspends heartbeat and housekeeping, but keeps connection alive)
+   */
+  pause(): Promise<void>;
+
+  /**
+   * Resume the connector from paused state
+   */
+  resume(): Promise<void>;
+
+  /**
    * Replace the current message handler
    */
   replaceHandler(handler: FameEnvelopeHandler): Promise<void>;
@@ -120,12 +130,36 @@ export abstract class BaseFameConnector implements FameConnector {
    * Stop the connector
    */
   async stop(): Promise<void> {
-    if (this._state !== ConnectorState.STARTED) {
+    if (this._state !== ConnectorState.STARTED && this._state !== ConnectorState.PAUSED) {
       throw new Error(`Cannot stop connector from state: ${this._state}`);
     }
 
     this._state = ConnectorState.STOPPED;
     await this.onStop();
+  }
+
+  /**
+   * Pause the connector
+   */
+  async pause(): Promise<void> {
+    if (this._state !== ConnectorState.STARTED) {
+      throw new Error(`Cannot pause connector from state: ${this._state}`);
+    }
+
+    this._state = ConnectorState.PAUSED;
+    await this.onPause();
+  }
+
+  /**
+   * Resume the connector
+   */
+  async resume(): Promise<void> {
+    if (this._state !== ConnectorState.PAUSED) {
+      throw new Error(`Cannot resume connector from state: ${this._state}`);
+    }
+
+    this._state = ConnectorState.STARTED;
+    await this.onResume();
   }
 
   /**
@@ -164,6 +198,15 @@ export abstract class BaseFameConnector implements FameConnector {
   protected abstract onClose(): Promise<void>;
   protected abstract onHandlerReplaced(handler: FameEnvelopeHandler): Promise<void>;
   protected abstract onError(error: Error): void;
+
+  // Optional lifecycle hooks with default empty implementations
+  protected async onPause(): Promise<void> {
+    // Default: no-op
+  }
+
+  protected async onResume(): Promise<void> {
+    // Default: no-op
+  }
 
   // Abstract methods that must be implemented
   abstract send(envelope: FameEnvelope): Promise<void>;
