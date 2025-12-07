@@ -38,7 +38,6 @@ export {
   resetFabricStack,
   fabricStack,
   withFabric,
-  withCurrentFabric,
 } from './naylence/fame/core/fame-fabric.js';
 export { runWithFabric } from './naylence/fame/core/run-with-fabric.js';
 

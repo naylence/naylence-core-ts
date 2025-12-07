@@ -24,10 +24,12 @@ describe('browser entry', () => {
     expect(id).toHaveLength(10);
   });
 
-  it('throws for synchronous fingerprint mode', () => {
-    expect(() => generateId({ mode: 'fingerprint' })).toThrow(
-      /async ID generation/i
-    );
+  it('falls back to random for synchronous fingerprint mode', () => {
+    // In the browser, sync fingerprint mode falls back to random behavior
+    // since deterministic fingerprinting requires async operations with explicit material
+    const id = generateId({ mode: 'fingerprint', length: 10 });
+    expect(typeof id).toBe('string');
+    expect(id).toHaveLength(10);
   });
 
   it('supports async fingerprint ids with web crypto', async () => {
