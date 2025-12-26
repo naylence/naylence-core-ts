@@ -7,6 +7,7 @@ import {
   normalizeHashAlgorithmNames,
   materialToBytes,
   rehashUntilCleanAsync,
+  generateFingerprintSync,
   fallbackHash,
 } from './id-generator.shared.js';
 
@@ -144,4 +145,4 @@ export async function generateIdAsync(options: GenerateIdOptions = {}): Promise<
   );
 }
 
-export { decodeBase64Fallback, type BytesLike, type GenerateIdOptions };
+export { decodeBase64Fallback, generateFingerprintSync, type BytesLike, type GenerateIdOptions };

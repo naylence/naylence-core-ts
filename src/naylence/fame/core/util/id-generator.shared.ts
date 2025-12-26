@@ -241,4 +241,59 @@ export function fallbackHash(data: Uint8Array): Uint8Array {
   return bytes;
 }
 
+/**
+ * Generates a deterministic fingerprint synchronously using the provided hash function.
+ * 
+ * This is a browser-safe function that creates a fingerprint ID from material using:
+ * - SHA-256 (or other hash algorithm provided) for cryptographic hashing
+ * - Base62 encoding for compact, URL-safe representation
+ * - Profanity filtering via rehashing until clean
+ * 
+ * @param material - Input string or bytes to fingerprint
+ * @param length - Desired length of the output ID
+ * @param hash - Synchronous hash function (e.g., sha256 from @noble/hashes)
+ * @param encoder - Text encoder (optional, defaults to TextEncoder if available)
+ * @param blacklist - Set of forbidden substrings (optional, defaults to built-in blacklist)
+ * @returns A deterministic, profanity-filtered base62-encoded ID
+ * 
+ * @example
+ * ```typescript
+ * import { sha256 } from '@noble/hashes/sha256';
+ * import { generateFingerprintSync } from '@naylence/core';
+ * 
+ * const id = generateFingerprintSync('my-input', 16, sha256);
+ * console.log(id); // e.g., "LLlLhAFPe5fD2TY1"
+ * ```
+ */
+export function generateFingerprintSync(
+  material: BytesLike,
+  length: number,
+  hash: (input: Uint8Array) => Uint8Array,
+  encoder?: TextEncoderLike,
+  blacklist?: Set<string>
+): string {
+  // Use provided encoder or fallback to TextEncoder if available
+  const textEncoder = encoder ?? (typeof TextEncoder !== 'undefined' ? new TextEncoder() : {
+    encode: (input: string) => {
+      const bytes = new Uint8Array(input.length);
+      for (let i = 0; i < input.length; i++) {
+        bytes[i] = input.charCodeAt(i) & 0xff;
+      }
+      return bytes;
+    }
+  });
+
+  // Use provided blacklist or create default one
+  const blacklistSet = blacklist ?? createBlacklist(decodeBase64Fallback);
+
+  // Convert material to bytes
+  const materialBytes = materialToBytes(material, textEncoder);
+
+  // Hash the material
+  const initialDigest = hash(materialBytes);
+
+  // Encode and rehash until clean
+  return rehashUntilCleanSync(initialDigest, length, hash, blacklistSet);
+}
+
 export { ALPHABET, BLACKLIST_ID_WORDS_B64 };

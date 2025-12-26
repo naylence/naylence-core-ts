@@ -15,7 +15,7 @@ export { type Addressable } from './naylence/fame/core/address/addressable.js';
 // Util
 export { type Closeable } from './naylence/fame/core/util/closeable.js';
 export { DEFAULT_INVOKE_TIMEOUT_MILLIS, DEFAULT_POLLING_TIMEOUT_MS } from './naylence/fame/core/util/constants.js';
-export { generateId, generateIdAsync, type GenerateIdOptions, type BytesLike } from './naylence/fame/core/util/id-generator.js';
+export { generateId, generateIdAsync, generateFingerprintSync, type GenerateIdOptions, type BytesLike } from './naylence/fame/core/util/id-generator.js';
 export { snakeToCamelObject, camelToSnakeObject, snakeToCamel, camelToSnake } from './naylence/fame/core/util/case-conversion.js';
 
 // Core
